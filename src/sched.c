@@ -8,8 +8,6 @@ static struct queue_t ready_queue;
 static struct queue_t run_queue;
 static pthread_mutex_t queue_lock;
 
-
-
 #ifdef MLQ_SCHED
 static struct queue_t mlq_ready_queue[MAX_PRIO];
 int slot[MAX_PRIO];
@@ -55,23 +53,24 @@ struct pcb_t *get_mlq_proc(void)
 	/*TODO: get a process from PRIORITY [ready_queue].
 	 * Remember to use lock to protect the queue.
 	 */
-	pthread_mutex_lock(&queue_lock);
-	for(int i =0;i<MAX_PRIO;i++)
+
+	for (int i = 0; i < MAX_PRIO; i++)
 	{
-		if(slot[i] == 0 || empty(&mlq_ready_queue[i]))
+		pthread_mutex_lock(&queue_lock);
+		if (slot[i] == 0 || empty(&mlq_ready_queue[i]))
 		{
 			slot[i] = MAX_PRIO - i;
 			continue;
 		}
 		// printf("................%d",i);
 		// printf("%d", mlq_ready_queue[i].size);
-		
 		proc = dequeue(&mlq_ready_queue[i]);
 		slot[i]--;
+		pthread_mutex_unlock(&queue_lock);
 		// printf("%d", mlq_ready_queue[i].size);
 		break;
 	}
-	pthread_mutex_unlock(&queue_lock);
+
 	return proc;
 }
 
@@ -112,11 +111,11 @@ struct pcb_t *get_proc(void)
 	 * */
 	pthread_mutex_lock(&queue_lock);
 
+	if (empty(&ready_queue))
+		proc = dequeue(&run_queue);
 
-	if(empty(&ready_queue)) proc = dequeue(&run_queue);
-
-	else proc = dequeue(&ready_queue);
-
+	else
+		proc = dequeue(&ready_queue);
 
 	pthread_mutex_unlock(&queue_lock);
 	return proc;
