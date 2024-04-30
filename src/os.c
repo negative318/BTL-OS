@@ -179,6 +179,7 @@ static void read_config(const char *path)
 	/* We provide here a back compatible with legacy OS simulatiom config file
 	 * In which, it have no addition config line for CPU_TLB
 	 */
+
 	tlbsz = 0x10000;
 #else
 	/* Read input config of TLB size:
@@ -209,7 +210,6 @@ static void read_config(const char *path)
 	fscanf(file, "%d\n", &memramsz);
 	for (sit = 0; sit < PAGING_MAX_MMSWP; sit++)
 		fscanf(file, "%d", &(memswpsz[sit]));
-
 	fscanf(file, "\n"); /* Final character */
 #endif
 #endif
@@ -227,6 +227,7 @@ static void read_config(const char *path)
 		char proc[100];
 #ifdef MLQ_SCHED
 		fscanf(file, "%lu %s %lu\n", &ld_processes.start_time[i], proc, &ld_processes.prio[i]);
+		printf("%lu %s %lu\n", ld_processes.start_time[i], proc, ld_processes.prio[i]);
 #else
 		fscanf(file, "%lu %s\n", &ld_processes.start_time[i], proc);
 #endif
@@ -276,12 +277,10 @@ int main(int argc, char *argv[])
 
 	/* Create MEM RAM */
 	init_memphy(&mram, memramsz, rdmflag);
-	printf("1");
 	/* Create all MEM SWAP */
 	int sit;
 	for (sit = 0; sit < PAGING_MAX_MMSWP; sit++)
 		init_memphy(&mswp[sit], memswpsz[sit], rdmflag);
-	printf("2");
 	/* In Paging mode, it needs passing the system mem to each PCB through loader*/
 	struct mmpaging_ld_args *mm_ld_args = malloc(sizeof(struct mmpaging_ld_args));
 
@@ -296,6 +295,7 @@ int main(int argc, char *argv[])
 	 * the system tlb to each PCB through loader
 	 */
 	mm_ld_args->tlb = (struct memphy_struct *)&tlb;
+
 #endif
 #endif
 	/* Init scheduler */
