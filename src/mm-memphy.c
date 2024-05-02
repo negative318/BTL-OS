@@ -5,7 +5,9 @@
  */
 
 #include "mm.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*
  *  MEMPHY_mv_csr - move MEMPHY cursor
@@ -161,6 +163,16 @@ int MEMPHY_dump(struct memphy_struct * mp)
      *     for tracing the memory content
      */
 
+      printf("===== PHYSICAL MEMORY DUMP =====\n");
+      for (int i = 0; i < mp->maxsz; ++i)
+      {
+         if (mp->storage[i] != 0)
+         {
+            printf("BYTE %08x: %d\n", i, mp->storage[i]);
+         }
+      }
+
+      printf("===== PHYSICAL MEMORY END-DUMP =====\n");
     return 0;
 }
 
@@ -185,10 +197,11 @@ int init_memphy(struct memphy_struct *mp, int max_size, int randomflg)
 {
    mp->storage = (BYTE *)malloc(max_size*sizeof(BYTE));
    mp->maxsz = max_size;
+   // memset(mp->storage, 0, max_size * sizeof(BYTE));
 
    MEMPHY_format(mp,PAGING_PAGESZ);
 
-   mp->rdmflg = (randomflg != 0)?1:0;
+   mp->rdmflg = (randomflg != 0) ? 1 : 0;
 
    if (!mp->rdmflg )   /* Not Ramdom acess device, then it serial device*/
       mp->cursor = 0;
