@@ -18,8 +18,21 @@
 
 #include "mm.h"
 #include <stdlib.h>
+#include <stdint.h>
 
+#define MAX_TLB 32
+#define GET_TAG(tlb_page) GETVAL(tlb_page, GENMASK(8, 0), 5)
+#define GET_PID(tlb_page) GETVAL(tlb_page, GENMASK(29, 9), 9)
+static uint32_t *tlb[MAX_TLB];
 #define init_tlbcache(mp, sz, ...) init_memphy(mp, sz, (1, ##__VA_ARGS__))
+
+/*
+bit 31: TAG USED
+bit 30: VALID
+bit 29-9: PID
+bit 5-8: TAG
+bit 0-4: INDEX
+*/
 
 /*
  *  tlb_cache_read read TLB cache device
@@ -28,13 +41,27 @@
  *  @pgnum: page number
  *  @value: obtained value
  */
-int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, BYTE value)
+
+int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, BYTE *value)
 {
    /* TODO: the identify info is mapped to
     *      cache line by employing:
     *      direct mapped, associated mapping etc.
     */
-   return 0;
+   int index = pgnum % 32;
+   int tag = pgnum / 32;
+   uint32_t tlb_page = tlb[index][0];
+   if (tlb_page & BIT(30))
+   {
+      int tag_page = GET_TAG(tlb_page);
+      int pid_page = GET_PID(tlb_page);
+      if (tag == tag_page && pid == pid_page)
+      {
+         value = tlb[index][1];
+         return 0;
+      }
+   }
+   return -1;
 }
 
 /*
@@ -44,13 +71,26 @@ int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, BYTE value)
  *  @pgnum: page number
  *  @value: obtained value
  */
-int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, BYTE value)
+int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, BYTE *value)
 {
    /* TODO: the identify info is mapped to
     *      cache line by employing:
     *      direct mapped, associated mapping etc.
     */
-   return 0;
+   int index = pgnum % 32;
+   int tag = pgnum / 32;
+   uint32_t tlb_page = tlb[index][0];
+   if (tlb_page & BIT(30))
+   {
+      int tag_page = GET_TAG(tlb_page);
+      int pid_page = GET_PID(tlb_page);
+      if (tag == tag_page && pid == pid_page)
+      {
+         tlb[index][1] = value;
+         return 0;
+      }
+   }
+   return -1;
 }
 
 /*
@@ -66,7 +106,6 @@ int TLBMEMPHY_read(struct memphy_struct *mp, int addr, BYTE *value)
 
    /* TLB cached is random access by native */
    *value = mp->storage[addr];
-
    return 0;
 }
 
@@ -94,10 +133,19 @@ int TLBMEMPHY_write(struct memphy_struct *mp, int addr, BYTE data)
 
 int TLBMEMPHY_dump(struct memphy_struct *mp)
 {
+   // in ra các PID, TAG, FPN trong tlb
    /*TODO dump memphy contnt mp->storage
     *     for tracing the memory content
     */
-
+   printf("=============START TLB DUMP=============");
+   for (int i = 0; i < MAX_TLB; i++)
+   {
+      if (tlb[i][0] & BIT(30))
+      {
+         printf("PID:%d ------------- TAG:%d ------------- FPN:%d\n", GET_PID(tlb[i][0]), GET_TAG(tlb[i][0]), tlb[i][1]);
+      }
+   }
+   printf("=============END TLB DUMP=============");
    return 0;
 }
 
@@ -107,6 +155,12 @@ int TLBMEMPHY_dump(struct memphy_struct *mp)
 int init_tlbmemphy(struct memphy_struct *mp, int max_size)
 {
    mp->storage = (BYTE *)malloc(max_size * sizeof(BYTE));
+   for (int i = 0; i < MAX_TLB; i++)
+   {
+      tlb[i] = (uint32_t *)(mp->storage + i * 8);
+      tlb[i][0] = 0; // tag
+      tlb[i][1] = 0; // frame number
+   }
    mp->maxsz = max_size;
 
    mp->rdmflg = 1;

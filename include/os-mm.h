@@ -60,7 +60,6 @@ struct mm_struct
    /* list of free page */
    struct pgn_t *fifo_pgn;
 };
-
 /*
  * FRAME/MEM PHY struct
  */
