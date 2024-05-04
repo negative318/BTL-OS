@@ -18,8 +18,8 @@
 
 int tlb_change_all_page_tables_of(struct pcb_t *proc, struct memphy_struct *mp)
 {
-    /* TODO update all page table directory info
-    *      in flush or wipe TLB (if needed)
+  /* TODO update all page table directory info
+   *      in flush or wipe TLB (if needed)
    */
 
   return 0;
@@ -28,7 +28,11 @@ int tlb_change_all_page_tables_of(struct pcb_t *proc, struct memphy_struct *mp)
 int tlb_flush_tlb_of(struct pcb_t *proc, struct memphy_struct *mp)
 {
   /* TODO flush tlb cached*/
-
+  for (int i = 0; i < MAX_TLB; i++)
+  {
+    tlb[i][0] = 0;
+    tlb[i][1] = 0;
+  }
   return 0;
 }
 
@@ -46,7 +50,6 @@ int tlballoc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
 
   /* TODO update TLB CACHED frame num of the new allocated page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
-
   return val;
 }
 
@@ -74,27 +77,53 @@ int tlbfree_data(struct pcb_t *proc, uint32_t reg_index)
 int tlbread(struct pcb_t *proc, uint32_t source,
             uint32_t offset, uint32_t destination)
 {
-  BYTE data, frmnum = -1;
-
+  BYTE data = -1, frmnum = -1;
+  int val = 0;
   /* TODO retrieve TLB CACHED frame num of accessing page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
   /* frmnum is return value of tlb_cache_read/write value*/
 
+  struct vm_rg_struct *region = get_symrg_byid(proc->mm, source);
+  if (region == NULL)
+  {
+    printf("REGION READ NULL\n");
+    return -1;
+  }
+  // addr =region->rg_start + offset
+  int page = PAGING_PGN(region->rg_start + offset);
+
+  tlb_cache_read(proc->tlb, proc->pid, page, &frmnum);
 #ifdef IODUMP
   if (frmnum >= 0)
-    printf("TLB hit at read region=%d offset=%d\n",
+  {
+    printf("TLB hit at read region=%d offset=(%d\n",
            source, offset);
+  }
   else
+  {
     printf("TLB miss at read region=%d offset=%d\n",
            source, offset);
+  }
 #ifdef PAGETBL_DUMP
   print_pgtbl(proc, 0, -1); // print max TBL
+  TLBMEMPHY_dump(proc->tlb);
 #endif
   MEMPHY_dump(proc->mram);
 #endif
 
-  int val = __read(proc, 0, source, offset, &data);
-
+  if (frmnum >= 0)
+  {
+    int physical_addr = frmnum << PAGING_ADDR_FPN_HIBIT + offset;
+    MEMPHY_read(proc->mram, physical_addr, data);
+  }
+  else
+  {
+    val = __read(proc, 0, source, offset, &data);
+    if (val == 0)
+      tlb_cache_write(proc->tlb, proc->pid, page, data);
+    TLBMEMPHY_dump(proc->tlb);
+    print_pgtbl(proc, 0, -1);
+  }
   destination = (uint32_t)data;
 
   /* TODO update TLB CACHED with frame num of recent accessing page(s)*/
@@ -112,28 +141,52 @@ int tlbread(struct pcb_t *proc, uint32_t source,
 int tlbwrite(struct pcb_t *proc, BYTE data,
              uint32_t destination, uint32_t offset)
 {
-  int val;
+  int val = 0;
   BYTE frmnum = -1;
 
   /* TODO retrieve TLB CACHED frame num of accessing page(s))*/
   /* by using tlb_cache_read()/tlb_cache_write()
   frmnum is return value of tlb_cache_read/write value*/
+  struct vm_rg_struct *region = get_symrg_byid(proc->mm, destination);
+  if (region == NULL)
+  {
+    printf("REGION WRITE NULL\n");
+    return -1;
+  }
+  int page = PAGING_PGN(region->rg_start + offset);
+  tlb_cache_write(proc->tlb, proc->pid, page, frmnum);
 
 #ifdef IODUMP
   if (frmnum >= 0)
+  {
     printf("TLB hit at write region=%d offset=%d value=%d\n",
            destination, offset, data);
+  }
   else
+  {
     printf("TLB miss at write region=%d offset=%d value=%d\n",
            destination, offset, data);
+  }
 #ifdef PAGETBL_DUMP
   print_pgtbl(proc, 0, -1); // print max TBL
 #endif
   MEMPHY_dump(proc->mram);
 #endif
-
-  val = __write(proc, 0, destination, offset, data);
-
+  if (frmnum >= 0)
+  {
+    int phyaddr = frmnum << PAGING_ADDR_FPN_LOBIT + offset;
+    MEMPHY_write(proc->mram, phyaddr, data);
+  }
+  else
+  {
+    val = __write(proc, 0, destination, offset, data);
+    if (val == 0)
+    {
+      tlb_cache_write(proc->tlb, proc->pid, page, data);
+    }
+    TLBMEMPHY_dump(proc->tlb);
+    print_pgtbl(proc, 0, -1);
+  }
   /* TODO update TLB CACHED with frame num of recent accessing page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
 

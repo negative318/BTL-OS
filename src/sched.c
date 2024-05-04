@@ -58,10 +58,9 @@ int check_new_process_come(int i)
 	{
 		if (empty(&mlq_ready_queue[j]) || slot[j] <= 0)
 			continue;
-		i = j - 1;
-		return 1;
+		return j - 1;
 	}
-	return 0;
+	return -2;
 }
 struct pcb_t *get_mlq_proc(void)
 {
@@ -70,14 +69,17 @@ struct pcb_t *get_mlq_proc(void)
 	 * Remember to use lock to protect the queue.
 	 */
 	int flag = 0;
+	int index = 0;
 	for (int i = 0; i < MAX_PRIO; ++i)
 	{
-		if (check_new_process_come(i))
+		pthread_mutex_lock(&queue_lock);
+		index = check_new_process_come(i);
+		if (index != -2)
 		{
+			i = index;
 			continue;
 		}
 		// printf("iii:...................................%d\n", i);
-		pthread_mutex_lock(&queue_lock);
 		if (empty(&mlq_ready_queue[i]))
 		{
 			if (flag == 1 && i == MAX_PRIO - 1)
@@ -101,7 +103,7 @@ struct pcb_t *get_mlq_proc(void)
 			pthread_mutex_unlock(&queue_lock);
 			continue;
 		}
-		// printf("i:.......................................... %d slot: %d\n", i, slot[i]);
+		printf("i:.... %d slot: %d\n", i, slot[i]);
 		proc = dequeue(&mlq_ready_queue[i]);
 		slot[i]--;
 		pthread_mutex_unlock(&queue_lock);

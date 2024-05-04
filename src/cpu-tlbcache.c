@@ -21,18 +21,17 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define MAX_TLB 32
-#define GET_TAG(tlb_page) GETVAL(tlb_page, GENMASK(8, 0), 5)
+#define GET_TAG(tlb_page) GETVAL(tlb_page, GENMASK(8, 0), 0)
 #define GET_PID(tlb_page) GETVAL(tlb_page, GENMASK(29, 9), 9)
-static uint32_t *tlb[MAX_TLB];
+
 #define init_tlbcache(mp, sz, ...) init_memphy(mp, sz, (1, ##__VA_ARGS__))
 
 /*
 bit 31: TAG USED
 bit 30: VALID
 bit 29-9: PID
-bit 5-8: TAG
-bit 0-4: INDEX
+bit 8-0: TAG
+
 */
 
 /*
@@ -138,7 +137,7 @@ int TLBMEMPHY_dump(struct memphy_struct *mp)
    /*TODO dump memphy contnt mp->storage
     *     for tracing the memory content
     */
-   printf("=============START TLB DUMP=============");
+   printf("=============START TLB DUMP=============\n");
    for (int i = 0; i < MAX_TLB; i++)
    {
       if (tlb[i][0] & BIT(30))
@@ -146,7 +145,7 @@ int TLBMEMPHY_dump(struct memphy_struct *mp)
          printf("PID:%d ------------- TAG:%d ------------- FPN:%d\n", GET_PID(tlb[i][0]), GET_TAG(tlb[i][0]), tlb[i][1]);
       }
    }
-   printf("=============END TLB DUMP=============");
+   printf("=============END TLB DUMP=============\n");
    return 0;
 }
 
