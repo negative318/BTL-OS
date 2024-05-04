@@ -149,7 +149,7 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   /* TODO: Manage the collect freed region to freerg_list */
   struct vm_rg_struct *rgnode = get_symrg_byid(caller->mm, rgid);
 
-  if (rgnode->rg_start == 0 && rgnode->rg_end == 0)
+  if (rgnode->rg_start == 0 && rgnode->rg_end == 0) // end == start
   {
     pthread_mutex_unlock(&mmvm_lock);
     return -1;
