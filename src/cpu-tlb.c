@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef CPU_TLB
 int tlb_change_all_page_tables_of(struct pcb_t *proc, struct memphy_struct *mp)
 {
   /* TODO update all page table directory info
@@ -85,7 +86,6 @@ int tlbread(struct pcb_t *proc, uint32_t source,
   /* TODO retrieve TLB CACHED frame num of accessing page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
   /* frmnum is return value of tlb_cache_read/write value*/
-
   struct vm_rg_struct *region = get_symrg_byid(proc->mm, source);
   if (region == NULL)
   {
@@ -199,4 +199,4 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
   return val;
 }
 
-// #endif
+#endif

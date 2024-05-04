@@ -1,4 +1,4 @@
-//#ifdef MM_PAGING
+// #ifdef MM_PAGING
 /*
  * PAGING based Memory Management
  * Memory physical module mm/mm-memphy.c
@@ -19,10 +19,11 @@ int MEMPHY_mv_csr(struct memphy_struct *mp, int offset)
    int numstep = 0;
 
    mp->cursor = 0;
-   while(numstep < offset && numstep < mp->maxsz){
-     /* Traverse sequentially */
-     mp->cursor = (mp->cursor + 1) % mp->maxsz;
-     numstep++;
+   while (numstep < offset && numstep < mp->maxsz)
+   {
+      /* Traverse sequentially */
+      mp->cursor = (mp->cursor + 1) % mp->maxsz;
+      numstep++;
    }
 
    return 0;
@@ -37,13 +38,13 @@ int MEMPHY_mv_csr(struct memphy_struct *mp, int offset)
 int MEMPHY_seq_read(struct memphy_struct *mp, int addr, BYTE *value)
 {
    if (mp == NULL)
-     return -1;
+      return -1;
 
    if (!mp->rdmflg)
-     return -1; /* Not compatible mode for sequential read */
+      return -1; /* Not compatible mode for sequential read */
 
    MEMPHY_mv_csr(mp, addr);
-   *value = (BYTE) mp->storage[addr];
+   *value = (BYTE)mp->storage[addr];
 
    return 0;
 }
@@ -54,16 +55,15 @@ int MEMPHY_seq_read(struct memphy_struct *mp, int addr, BYTE *value)
  *  @addr: address
  *  @value: obtained value
  */
-int MEMPHY_read(struct memphy_struct * mp, int addr, BYTE *value)
+int MEMPHY_read(struct memphy_struct *mp, int addr, BYTE *value)
 {
    if (mp == NULL)
-     return -1;
+      return -1;
 
    if (mp->rdmflg)
       *value = mp->storage[addr];
    else /* Sequential access device */
       return MEMPHY_seq_read(mp, addr, value);
-
    return 0;
 }
 
@@ -73,18 +73,16 @@ int MEMPHY_read(struct memphy_struct * mp, int addr, BYTE *value)
  *  @addr: address
  *  @data: written data
  */
-int MEMPHY_seq_write(struct memphy_struct * mp, int addr, BYTE value)
+int MEMPHY_seq_write(struct memphy_struct *mp, int addr, BYTE value)
 {
-
    if (mp == NULL)
-     return -1;
+      return -1;
 
    if (!mp->rdmflg)
-     return -1; /* Not compatible mode for sequential read */
+      return -1; /* Not compatible mode for sequential read */
 
    MEMPHY_mv_csr(mp, addr);
    mp->storage[addr] = value;
-
    return 0;
 }
 
@@ -94,10 +92,10 @@ int MEMPHY_seq_write(struct memphy_struct * mp, int addr, BYTE value)
  *  @addr: address
  *  @data: written data
  */
-int MEMPHY_write(struct memphy_struct * mp, int addr, BYTE data)
+int MEMPHY_write(struct memphy_struct *mp, int addr, BYTE data)
 {
    if (mp == NULL)
-     return -1;
+      return -1;
 
    if (mp->rdmflg)
       mp->storage[addr] = data;
@@ -113,30 +111,30 @@ int MEMPHY_write(struct memphy_struct * mp, int addr, BYTE data)
  */
 int MEMPHY_format(struct memphy_struct *mp, int pagesz)
 {
-    /* This setting come with fixed constant PAGESZ */
-    int numfp = mp->maxsz / pagesz;
-    struct framephy_struct *newfst, *fst;
-    int iter = 0;
+   /* This setting come with fixed constant PAGESZ */
+   int numfp = mp->maxsz / pagesz;
+   struct framephy_struct *newfst, *fst;
+   int iter = 0;
 
-    if (numfp <= 0)
+   if (numfp <= 0)
       return -1;
 
-    /* Init head of free framephy list */ 
-    fst = malloc(sizeof(struct framephy_struct));
-    fst->fpn = iter;
-    mp->free_fp_list = fst;
+   /* Init head of free framephy list */
+   fst = malloc(sizeof(struct framephy_struct));
+   fst->fpn = iter;
+   mp->free_fp_list = fst;
 
-    /* We have list with first element, fill in the rest num-1 element member*/
-    for (iter = 1; iter < numfp ; iter++)
-    {
-       newfst =  malloc(sizeof(struct framephy_struct));
-       newfst->fpn = iter;
-       newfst->fp_next = NULL;
-       fst->fp_next = newfst;
-       fst = newfst;
-    }
+   /* We have list with first element, fill in the rest num-1 element member*/
+   for (iter = 1; iter < numfp; iter++)
+   {
+      newfst = malloc(sizeof(struct framephy_struct));
+      newfst->fpn = iter;
+      newfst->fp_next = NULL;
+      fst->fp_next = newfst;
+      fst = newfst;
+   }
 
-    return 0;
+   return 0;
 }
 
 int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
@@ -144,7 +142,7 @@ int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
    struct framephy_struct *fp = mp->free_fp_list;
 
    if (fp == NULL)
-     return -1;
+      return -1;
 
    *retfpn = fp->fpn;
    mp->free_fp_list = fp->fp_next;
@@ -157,23 +155,24 @@ int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
    return 0;
 }
 
-int MEMPHY_dump(struct memphy_struct * mp)
+int MEMPHY_dump(struct memphy_struct *mp)
 {
-    /*TODO dump memphy contnt mp->storage 
-     *     for tracing the memory content
-     */
+   /*TODO dump memphy contnt mp->storage
+    *     for tracing the memory content
+    */
 
-      printf("===== PHYSICAL MEMORY DUMP =====\n");
-      for (int i = 0; i < mp->maxsz; ++i)
+   printf("===== PHYSICAL MEMORY DUMP =====\n");
+   for (int i = 0; i < mp->maxsz; ++i)
+   {
+      if (mp->storage[i] != 0)
       {
-         if (mp->storage[i] != 0)
-         {
-            printf("BYTE %08x: %d\n", i, mp->storage[i]);
-         }
+         printf("BYTE %08x: %d\n", i, mp->storage[i]);
       }
-
-      printf("===== PHYSICAL MEMORY END-DUMP =====\n");
-    return 0;
+   }
+   printf("wwwwwwwwwwwwwwwww");
+   printf("===== PHYSICAL MEMORY END-DUMP =====\n");
+   printf("kkkkkkkkkkkkkkkkkk");
+   return 0;
 }
 
 int MEMPHY_put_freefp(struct memphy_struct *mp, int fpn)
@@ -189,24 +188,27 @@ int MEMPHY_put_freefp(struct memphy_struct *mp, int fpn)
    return 0;
 }
 
-
 /*
  *  Init MEMPHY struct
  */
 int init_memphy(struct memphy_struct *mp, int max_size, int randomflg)
 {
-   mp->storage = (BYTE *)malloc(max_size*sizeof(BYTE));
+   mp->storage = (BYTE *)malloc(max_size * sizeof(BYTE));
+   for (int i = 0; i < max_size; i++)
+   {
+      mp->storage[i] = 0;
+   }
    mp->maxsz = max_size;
    // memset(mp->storage, 0, max_size * sizeof(BYTE));
 
-   MEMPHY_format(mp,PAGING_PAGESZ);
+   MEMPHY_format(mp, PAGING_PAGESZ);
 
    mp->rdmflg = (randomflg != 0) ? 1 : 0;
 
-   if (!mp->rdmflg )   /* Not Ramdom acess device, then it serial device*/
+   if (!mp->rdmflg) /* Not Ramdom acess device, then it serial device*/
       mp->cursor = 0;
 
    return 0;
 }
 
-//#endif
+// #endif

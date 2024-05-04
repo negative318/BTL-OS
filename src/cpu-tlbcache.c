@@ -23,7 +23,7 @@
 
 #define GET_TAG(tlb_page) GETVAL(tlb_page, GENMASK(8, 0), 0)
 #define GET_PID(tlb_page) GETVAL(tlb_page, GENMASK(29, 9), 9)
-
+#define GET_VALID(tlb_page) GETVAL(tlb_page, BIT(31), 31)
 #define init_tlbcache(mp, sz, ...) init_memphy(mp, sz, (1, ##__VA_ARGS__))
 
 /*
@@ -80,16 +80,8 @@ int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, BYTE *value)
    int index = pgnum % 32;
    int tag = pgnum / 32;
    uint32_t tlb_page = tlb[index][0];
-   if (tlb_page & BIT(30))
-   {
-      int tag_page = GET_TAG(tlb_page);
-      int pid_page = GET_PID(tlb_page);
-      if (tag == tag_page && pid == pid_page)
-      {
-         tlb[index][1] = value;
-         return 0;
-      }
-   }
+   tlb[index][1] = value;
+   SETBIT(tlb[index][0], BIT(31));
    return -1;
 }
 
@@ -140,9 +132,13 @@ int TLBMEMPHY_dump(struct memphy_struct *mp)
    printf("==========================START TLB DUMP==========================\n");
    for (int i = 0; i < MAX_TLB; i++)
    {
+      int valid = GET_VALID(tlb[i][0]);
+      int pid = GET_PID(tlb[i][0]);
+      int tag = GET_TAG(tlb[i][0]);
+      int frame = tlb[i][1];
       if (tlb[i][0] & BIT(30))
       {
-         printf("PID:%d ------------- TAG:%d ------------- FPN:%d\n", GET_PID(tlb[i][0]), GET_TAG(tlb[i][0]), tlb[i][1]);
+         printf("%02d %d %08d %08d %08d\n", i, valid, pid, frame);
       }
    }
    printf("==========================END TLB DUMP==========================\n");
