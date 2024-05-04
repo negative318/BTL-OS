@@ -137,7 +137,7 @@ int TLBMEMPHY_dump(struct memphy_struct *mp)
    /*TODO dump memphy contnt mp->storage
     *     for tracing the memory content
     */
-   printf("=============START TLB DUMP=============\n");
+   printf("==========================START TLB DUMP==========================\n");
    for (int i = 0; i < MAX_TLB; i++)
    {
       if (tlb[i][0] & BIT(30))
@@ -145,7 +145,7 @@ int TLBMEMPHY_dump(struct memphy_struct *mp)
          printf("PID:%d ------------- TAG:%d ------------- FPN:%d\n", GET_PID(tlb[i][0]), GET_TAG(tlb[i][0]), tlb[i][1]);
       }
    }
-   printf("=============END TLB DUMP=============\n");
+   printf("==========================END TLB DUMP==========================\n");
    return 0;
 }
 

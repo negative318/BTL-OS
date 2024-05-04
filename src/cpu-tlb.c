@@ -50,6 +50,8 @@ int tlballoc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
 
   /* TODO update TLB CACHED frame num of the new allocated page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
+  TLBMEMPHY_dump(proc->tlb);
+  print_pgtbl(proc, 0, -1);
   return val;
 }
 
@@ -64,7 +66,8 @@ int tlbfree_data(struct pcb_t *proc, uint32_t reg_index)
 
   /* TODO update TLB CACHED frame num of freed page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
-
+  TLBMEMPHY_dump(proc->tlb);
+  print_pgtbl(proc, 0, -1);
   return 0;
 }
 
@@ -89,8 +92,9 @@ int tlbread(struct pcb_t *proc, uint32_t source,
     printf("REGION READ NULL\n");
     return -1;
   }
-  // addr =region->rg_start + offset
-  int page = PAGING_PGN(region->rg_start + offset);
+  int addr = region->rg_start + offset;
+
+  int page = PAGING_PGN(addr);
 
   tlb_cache_read(proc->tlb, proc->pid, page, &frmnum);
 #ifdef IODUMP
@@ -114,7 +118,7 @@ int tlbread(struct pcb_t *proc, uint32_t source,
   if (frmnum >= 0)
   {
     int physical_addr = frmnum << PAGING_ADDR_FPN_HIBIT + offset;
-    MEMPHY_read(proc->mram, physical_addr, data);
+    MEMPHY_read(proc->mram, physical_addr, &data);
   }
   else
   {
@@ -147,13 +151,15 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
   /* TODO retrieve TLB CACHED frame num of accessing page(s))*/
   /* by using tlb_cache_read()/tlb_cache_write()
   frmnum is return value of tlb_cache_read/write value*/
-  struct vm_rg_struct *region = get_symrg_byid(proc->mm, destination);
+  struct vm_rg_struct *region = get_symrg_byid(proc->mm, (int)destination);
   if (region == NULL)
   {
     printf("REGION WRITE NULL\n");
     return -1;
   }
-  int page = PAGING_PGN(region->rg_start + offset);
+
+  int addr = region->rg_start + offset;
+  int page = PAGING_PGN(addr);
   tlb_cache_write(proc->tlb, proc->pid, page, frmnum);
 
 #ifdef IODUMP
