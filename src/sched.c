@@ -103,7 +103,7 @@ struct pcb_t *get_mlq_proc(void)
 			pthread_mutex_unlock(&queue_lock);
 			continue;
 		}
-		printf("i:.... %d slot: %d\n", i, slot[i]);
+		// printf("i:.... %d slot: %d\n", i, slot[i]);
 		proc = dequeue(&mlq_ready_queue[i]);
 		slot[i]--;
 		pthread_mutex_unlock(&queue_lock);
