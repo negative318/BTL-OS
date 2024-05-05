@@ -15,8 +15,9 @@
 #include "mm.h"
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <pthread.h>
 #ifdef CPU_TLB
+static pthread_mutex_t mmvm_lock = PTHREAD_MUTEX_INITIALIZER;
 int tlb_change_all_page_tables_of(struct pcb_t *proc, struct memphy_struct *mp)
 {
   /* TODO update all page table directory info
@@ -44,6 +45,7 @@ int tlb_flush_tlb_of(struct pcb_t *proc, struct memphy_struct *mp)
  */
 int tlballoc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
 {
+  pthread_mutex_lock(&mmvm_lock);
   int addr, val;
 
   /* By default using vmaid = 0 */
@@ -53,6 +55,7 @@ int tlballoc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
   /* by using tlb_cache_read()/tlb_cache_write()*/
   TLBMEMPHY_dump(proc->tlb);
   print_pgtbl(proc, 0, -1);
+  pthread_mutex_unlock(&mmvm_lock);
   return val;
 }
 
