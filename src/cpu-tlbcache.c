@@ -20,12 +20,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
+#include <pthread.h>
 #define GET_TAG(tlb_page) GETVAL(tlb_page, GENMASK(8, 0), 0)
 #define GET_PID(tlb_page) GETVAL(tlb_page, GENMASK(29, 9), 9)
 #define GET_VALID(tlb_page) GETVAL(tlb_page, BIT(31), 31)
 #define init_tlbcache(mp, sz, ...) init_memphy(mp, sz, (1, ##__VA_ARGS__))
-
+static pthread_mutex_t tlb_lock;
 /*
 bit 31: TAG USED
 bit 30: VALID
@@ -129,6 +129,7 @@ int TLBMEMPHY_dump(struct memphy_struct *mp)
    /*TODO dump memphy contnt mp->storage
     *     for tracing the memory content
     */
+   pthread_mutex_lock(&tlb_lock);
    printf("==========================START TLB DUMP==========================\n");
    for (int i = 0; i < MAX_TLB; i++)
    {
@@ -136,12 +137,10 @@ int TLBMEMPHY_dump(struct memphy_struct *mp)
       int pid = GET_PID(tlb[i][0]);
       int tag = GET_TAG(tlb[i][0]);
       int frame = tlb[i][1];
-      if (tlb[i][0] & BIT(30))
-      {
-         printf("%02d %d %08d %08d %08d\n", i, valid, pid, frame);
-      }
+      printf("%02d %d %08d %08d\n", i, valid, pid, frame);
    }
    printf("==========================END TLB DUMP==========================\n");
+   pthread_mutex_unlock(&tlb_lock);
    return 0;
 }
 
@@ -158,9 +157,10 @@ int init_tlbmemphy(struct memphy_struct *mp, int max_size)
       tlb[i][1] = 0; // frame number
    }
    mp->maxsz = max_size;
-
+   printf("111111111111111111111111111111111111111111111111111111111111111111111111111111");
+   TLBMEMPHY_dump(mp);
    mp->rdmflg = 1;
-
+   pthread_mutex_init(&tlb_lock, NULL);
    return 0;
 }
 

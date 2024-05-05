@@ -166,7 +166,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
       pte_set_swap(&caller->mm->pgd[vicpgn], 0, swpfpn);
 #ifdef CPU_TLB
-      tlb_clear_bit_valid(caller->tlb, caller->pid, vicpgn);
+      // tlb_clear_bit_valid(caller->tlb, caller->pid, vicpgn);
 #endif
       newfp_str->fpn = vicfpn;
     }
