@@ -102,10 +102,21 @@ int vmap_page_range(struct pcb_t *caller,           // process call
    *      [addr to addr + pgnum*PAGING_PAGESZ
    *      in page table caller->mm->pgd[]
    */
+  for (; pgit < pgnum; ++pgit)
+  {
+    fpit = frames;
+    pte_set_fpn(&caller->mm->pgd[pgn + pgit], fpit->fpn);
 
-  /* Tracking for later page replacement activities (if needed)
-   * Enqueue new usage page */
-  enlist_pgn_node(&caller->mm->fifo_pgn, pgn + pgit);
+#ifdef IODUMP
+    printf("========PID: %d ADDR: %d --- PAGE: %d ----> FRAME: %d\n", caller->pid, addr, pgn + pgit, fpit->fpn);
+#endif
+
+    frames = frames->fp_next;
+    free(fpit);
+    /* Tracking for later page replacement activities (if needed)
+     * Enqueue new usage page */
+    enlist_pgn_node(&caller->mm->fifo_pgn, pgn + pgit);
+  }
 
   return 0;
 }
@@ -120,21 +131,51 @@ int vmap_page_range(struct pcb_t *caller,           // process call
 int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struct **frm_lst)
 {
   int pgit, fpn;
-  // struct framephy_struct *newfp_str;
+  struct framephy_struct *newfp_str = NULL;
 
   for (pgit = 0; pgit < req_pgnum; pgit++)
   {
+    newfp_str = (struct framephy_struct *)malloc(sizeof(struct framephy_struct));
     if (MEMPHY_get_freefp(caller->mram, &fpn) == 0)
     {
+      newfp_str->fpn = fpn;
     }
     else
     { // ERROR CODE of obtaining somes but not enough frames
+      int vicpgn, swpfpn;
+      if (find_victim_page(caller->mm, &vicpgn) == -1 || MEMPHY_get_freefp(caller->active_mswp, &swpfpn) == -1)
+      {
+        if (*frm_lst == NULL)
+        {
+          return -1;
+        }
+        else
+        {
+          struct framephy_struct *freefp_str;
+          while (*frm_lst != NULL)
+          {
+            freefp_str = *frm_lst;
+            *frm_lst = (*frm_lst)->fp_next;
+            free(freefp_str);
+          }
+          return -3000;
+        }
+      }
+      uint32_t vicpte = caller->mm->pgd[vicpgn];
+      int vicfpn = PAGING_FPN(vicpte);
+      __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
+      pte_set_swap(&caller->mm->pgd[vicpgn], 0, swpfpn);
+#ifdef CPU_TLB
+      tlb_clear_bit_valid(caller->tlb, caller->pid, vicpgn);
+#endif
+      newfp_str->fpn = vicfpn;
     }
+    newfp_str->fp_next = *frm_lst;
+    *frm_lst = newfp_str;
   }
 
   return 0;
 }
-
 /*
  * vm_map_ram - do the mapping all vm are to ram storage device
  * @caller    : caller
@@ -242,7 +283,6 @@ struct vm_rg_struct *init_vm_rg(int rg_start, int rg_end)
 
 int enlist_vm_rg_node(struct vm_rg_struct **rglist, struct vm_rg_struct *rgnode)
 {
-  printf("start: %d, end: %d\n", rgnode->rg_start, rgnode->rg_end);
   if (*rglist == NULL)
     *rglist = rgnode;
   else

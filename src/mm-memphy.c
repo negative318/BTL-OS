@@ -7,7 +7,6 @@
 #include "mm.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 /*
  *  MEMPHY_mv_csr - move MEMPHY cursor
@@ -161,7 +160,7 @@ int MEMPHY_dump(struct memphy_struct *mp)
     *     for tracing the memory content
     */
 
-   printf("===== PHYSICAL MEMORY DUMP =====\n");
+   printf("=====START MEMPHY DUMP =====\n");
    for (int i = 0; i < mp->maxsz; ++i)
    {
       if (mp->storage[i] != 0)
@@ -169,9 +168,7 @@ int MEMPHY_dump(struct memphy_struct *mp)
          printf("BYTE %08x: %d\n", i, mp->storage[i]);
       }
    }
-   printf("wwwwwwwwwwwwwwwww");
-   printf("===== PHYSICAL MEMORY END-DUMP =====\n");
-   printf("kkkkkkkkkkkkkkkkkk");
+   printf("=====END MEMPHY DUMP =====\n");
    return 0;
 }
 
