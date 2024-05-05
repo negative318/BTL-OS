@@ -87,7 +87,7 @@ int tlbread(struct pcb_t *proc, uint32_t source,
   /* by using tlb_cache_read()/tlb_cache_write()*/
   /* frmnum is return value of tlb_cache_read/write value*/
   struct vm_rg_struct *region = get_symrg_byid(proc->mm, source);
-  if (region == NULL)
+  if (check_if_in_freerg_list(proc, 0, region) < 0)
   {
     printf("REGION READ NULL\n");
     return -1;
@@ -124,7 +124,10 @@ int tlbread(struct pcb_t *proc, uint32_t source,
   {
     val = __read(proc, 0, source, offset, &data);
     if (val == 0)
+    {
+      printf("pid: %d page: %d value: %d 11111111111111111111111111\n", proc->pid, page, data);
       tlb_cache_write(proc->tlb, proc->pid, page, data);
+    }
     TLBMEMPHY_dump(proc->tlb);
     print_pgtbl(proc, 0, -1);
   }
@@ -160,6 +163,7 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
 
   int addr = region->rg_start + offset;
   int page = PAGING_PGN(addr);
+  printf("pid: %d page: %d value: %d 2222222222222222222222222222222\n", proc->pid, page, frmnum);
   tlb_cache_write(proc->tlb, proc->pid, page, frmnum);
 
 #ifdef IODUMP
@@ -188,6 +192,7 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
     val = __write(proc, 0, destination, offset, data);
     if (val == 0)
     {
+      printf("pid: %d page: %d value: %d 333333333333333333333333\n", proc->pid, page, data);
       tlb_cache_write(proc->tlb, proc->pid, page, data);
     }
     TLBMEMPHY_dump(proc->tlb);

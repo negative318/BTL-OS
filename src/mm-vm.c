@@ -137,7 +137,7 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
     rg_free->rg_end = remain_rg->sbrk;
     enlist_vm_freerg_list(caller->mm, rg_free);
   }
-
+  print_pgtbl(caller, 0, -1);
   pthread_mutex_unlock(&mmvm_lock);
 
   return 0;
@@ -150,30 +150,30 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
  *@size: allocated size
  *
  */
-int clear_pgn_node(struct pcb_t *proc, int pgn)
-{
-  struct pgn_t *newlist = NULL;
-  struct pgn_t *temp = proc->mm->fifo_pgn;
-  if (temp == NULL)
-    return -1;
-  while (temp != NULL)
-  {
-    if (temp->pgn == pgn)
-    {
-      if (newlist == NULL)
-      {
-        proc->mm->fifo_pgn = temp->pg_next;
-      }
-      else
-      {
-        newlist->pg_next = temp->pg_next;
-      }
-    }
-    newlist = temp;
-    temp = temp->pg_next;
-  }
-  return 0;
-}
+// int clear_pgn_node(struct pcb_t *proc, int pgn)
+// {
+//   struct pgn_t *newlist = NULL;
+//   struct pgn_t *temp = proc->mm->fifo_pgn;
+//   if (temp == NULL)
+//     return -1;
+//   while (temp != NULL)
+//   {
+//     if (temp->pgn == pgn)
+//     {
+//       if (newlist == NULL)
+//       {
+//         proc->mm->fifo_pgn = temp->pg_next;
+//       }
+//       else
+//       {
+//         newlist->pg_next = temp->pg_next;
+//       }
+//     }
+//     newlist = temp;
+//     temp = temp->pg_next;
+//   }
+//   return 0;
+// }
 int __free(struct pcb_t *caller, int vmaid, int rgid)
 {
   pthread_mutex_lock(&mmvm_lock);
@@ -192,16 +192,16 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
     pthread_mutex_unlock(&mmvm_lock);
     return -1;
   }
-  int inc_sz = temp->rg_end - temp->rg_start;
-  int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
-  int incnumpage = inc_amt / PAGING_PAGESZ;
-  int pgn = PAGING_PGN(temp->rg_start);
-  for (int i = 0; i < incnumpage; i++)
-  {
-    MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
-    SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
-    clear_pgn_node(caller, pgn + i);
-  }
+  // int inc_sz = rgnode->rg_end - rgnode->rg_start;
+  // int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
+  // int incnumpage = inc_amt / PAGING_PAGESZ;
+  // int pgn = PAGING_PGN(rgnode->rg_start);
+  // for (int i = 0; i < incnumpage; i++)
+  // {
+  //   MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
+  //   SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
+  //   clear_pgn_node(caller, pgn + i);
+  // }
   struct vm_rg_struct *freerg_node = malloc(sizeof(struct vm_rg_struct));
   freerg_node->rg_start = rgnode->rg_start;
   freerg_node->rg_end = rgnode->rg_end;
@@ -449,13 +449,16 @@ int pgwrite(
     uint32_t destination, // Index of destination register
     uint32_t offset)
 {
-
+  int num = __write(proc, 0, destination, offset, data);
 #ifdef IODUMP
-  printf("write region=%d offset=%d value=%d\n", destination, offset, data);
+  if (num != -1)
+  {
+    printf("write region=%d offset=%d value=%d\n", destination, offset, data);
+  }
 #ifdef PAGETBL_DUMP
   print_pgtbl(proc, 0, -1); // print max TBL
 #endif
-  int num = __write(proc, 0, destination, offset, data);
+
   MEMPHY_dump(proc->mram);
 #endif
   return num;

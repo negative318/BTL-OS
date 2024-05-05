@@ -13,8 +13,8 @@
 #include "os-mm.h"
 #endif
 
-#define ADDRESS_SIZE 20
-#define OFFSET_LEN 10
+#define ADDRESS_SIZE 22
+#define OFFSET_LEN 8
 #define FIRST_LV_LEN 5
 #define SECOND_LV_LEN 5
 #define SEGMENT_LEN FIRST_LV_LEN
@@ -87,7 +87,7 @@ struct pcb_t
 	struct memphy_struct *tlb;
 #endif
 #ifdef MM_PAGING
-	struct mm_struct *mm; 
+	struct mm_struct *mm;
 	struct memphy_struct *mram;
 	struct memphy_struct **mswp;
 	struct memphy_struct *active_mswp;

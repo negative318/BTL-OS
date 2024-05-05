@@ -106,7 +106,10 @@ int vmap_page_range(struct pcb_t *caller,           // process call
   {
     fpit = frames;
     pte_set_fpn(&caller->mm->pgd[pgn + pgit], fpit->fpn);
-
+#ifdef CPU_TLB
+    printf("pid: %d page: %d value: %d 4444444444444444444444444444\n", caller->pid, pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]));
+    tlb_cache_write(caller->tlb, caller->pid, pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]));
+#endif
 #ifdef IODUMP
     printf("========PID: %d ADDR: %d --- PAGE: %d ----> FRAME: %d\n", caller->pid, addr, pgn + pgit, fpit->fpn);
 #endif

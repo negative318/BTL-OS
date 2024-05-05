@@ -77,6 +77,7 @@ struct pcb_t *get_mlq_proc(void)
 		if (index != -2)
 		{
 			i = index;
+			pthread_mutex_unlock(&queue_lock);
 			continue;
 		}
 		// printf("iii:...................................%d\n", i);

@@ -42,7 +42,7 @@ bit 8-0: TAG
  *  @value: obtained value
  */
 
-int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, BYTE *value)
+int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, int *value)
 {
    /* TODO: the identify info is mapped to
     *      cache line by employing:
@@ -71,7 +71,7 @@ int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, BYTE *value)
  *  @pgnum: page number
  *  @value: obtained value
  */
-int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, BYTE *value)
+int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, int value)
 {
    /* TODO: the identify info is mapped to
     *      cache line by employing:
@@ -157,7 +157,6 @@ int init_tlbmemphy(struct memphy_struct *mp, int max_size)
       tlb[i][1] = 0; // frame number
    }
    mp->maxsz = max_size;
-   printf("111111111111111111111111111111111111111111111111111111111111111111111111111111");
    TLBMEMPHY_dump(mp);
    mp->rdmflg = 1;
    pthread_mutex_init(&tlb_lock, NULL);
