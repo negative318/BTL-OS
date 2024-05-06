@@ -192,28 +192,28 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
     pthread_mutex_unlock(&mmvm_lock);
     return -1;
   }
-// int inc_sz = rgnode->rg_end - rgnode->rg_start;
-// int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
-// int incnumpage = inc_amt / PAGING_PAGESZ;
-// int pgn = PAGING_PGN(rgnode->rg_start);
-// for (int i = 0; i < incnumpage; i++)
-// {
-//   MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
-//   SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
-//   clear_pgn_node(caller, pgn + i);
-// }
-#ifdef CPU_TLB
-  int inc_sz = rgnode->rg_end - rgnode->rg_start;
-  int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
-  int incnumpage = inc_amt / PAGING_PAGESZ;
-  int pgn = PAGING_PGN(rgnode->rg_start);
-  for (int i = 0; i < incnumpage; i++)
-  {
-    MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
-    SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
-    clear_pgn_node(caller, pgn + i);
-  }
-#endif
+  // int inc_sz = rgnode->rg_end - rgnode->rg_start;
+  // int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
+  // int incnumpage = inc_amt / PAGING_PAGESZ;
+  // int pgn = PAGING_PGN(rgnode->rg_start);
+  // for (int i = 0; i < incnumpage; i++)
+  // {
+  //   MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
+  //   SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
+  //   clear_pgn_node(caller, pgn + i);
+  // }
+  // #ifdef CPU_TLB
+  //   int inc_sz = rgnode->rg_end - rgnode->rg_start;
+  //   int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
+  //   int incnumpage = inc_amt / PAGING_PAGESZ;
+  //   int pgn = PAGING_PGN(rgnode->rg_start);
+  //   for (int i = 0; i < incnumpage; i++)
+  //   {
+  //     MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
+  //     SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
+  //     clear_pgn_node(caller, pgn + i);
+  //   }
+  // #endif
   struct vm_rg_struct *freerg_node = malloc(sizeof(struct vm_rg_struct));
   freerg_node->rg_start = rgnode->rg_start;
   freerg_node->rg_end = rgnode->rg_end;
