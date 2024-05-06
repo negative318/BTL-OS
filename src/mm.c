@@ -75,7 +75,6 @@ int pte_set_fpn(uint32_t *pte, int fpn)
   CLRBIT(*pte, PAGING_PTE_SWAPPED_MASK);
 
   SETVAL(*pte, fpn, PAGING_PTE_FPN_MASK, PAGING_PTE_FPN_LOBIT);
-
   return 0;
 }
 
@@ -107,8 +106,9 @@ int vmap_page_range(struct pcb_t *caller,           // process call
     fpit = frames;
     pte_set_fpn(&caller->mm->pgd[pgn + pgit], fpit->fpn);
 #ifdef CPU_TLB
-    printf("pid: %d page: %d value: %d 4444444444444444444444444444\n", caller->pid, pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]));
+    printf("pid: %d page: %d farme: %d 4444444444444444444444444444\n", caller->pid, pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]));
     tlb_cache_write(caller->tlb, caller->pid, pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]));
+
 #endif
 #ifdef IODUMP
     printf("========PID: %d ADDR: %d --- PAGE: %d ----> FRAME: %d\n", caller->pid, addr, pgn + pgit, fpit->fpn);

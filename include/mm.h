@@ -75,7 +75,7 @@ static uint32_t *tlb[MAX_TLB];
 /* Other masks */
 #define PAGING_OFFST_MASK GENMASK(PAGING_ADDR_OFFST_HIBIT, PAGING_ADDR_OFFST_LOBIT)
 #define PAGING_PGN_MASK GENMASK(PAGING_ADDR_PGN_HIBIT, PAGING_ADDR_PGN_LOBIT)
-#define PAGING_FPN_MASK GENMASK(PAGING_ADDR_FPN_HIBIT, PAGING_ADDR_FPN_LOBIT)
+#define PAGING_FPN_MASK GENMASK(PAGING_PTE_FPN_HIBIT, PAGING_PTE_FPN_LOBIT)
 #define PAGING_SWP_MASK GENMASK(PAGING_SWP_HIBIT, PAGING_SWP_LOBIT)
 
 /* Extract OFFSET */
@@ -84,11 +84,11 @@ static uint32_t *tlb[MAX_TLB];
 /* Extract Page Number*/
 #define PAGING_PGN(x) GETVAL(x, PAGING_PGN_MASK, PAGING_ADDR_PGN_LOBIT)
 /* Extract FramePHY Number*/
-#define PAGING_FPN(x) GETVAL(x, PAGING_FPN_MASK, PAGING_ADDR_FPN_LOBIT)
+#define PAGING_FPN(x) GETVAL(x, PAGING_FPN_MASK, PAGING_PTE_FPN_LOBIT)
 /* Extract SWAPFPN */
 #define PAGING_PGN(x) GETVAL(x, PAGING_PGN_MASK, PAGING_ADDR_PGN_LOBIT)
 /* Extract SWAPTYPE */
-#define PAGING_FPN(x) GETVAL(x, PAGING_FPN_MASK, PAGING_ADDR_FPN_LOBIT)
+#define PAGING_FPN(x) GETVAL(x, PAGING_FPN_MASK, PAGING_PTE_FPN_LOBIT)
 
 /* Memory range operator */
 #define INCLUDE(x1, x2, y1, y2) (((y1 - x1) * (x2 - y2) >= 0) ? 1 : 0)
@@ -120,6 +120,7 @@ int __write(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE value);
 int init_mm(struct mm_struct *mm, struct pcb_t *caller);
 
 /* CPUTLB prototypes */
+int check_if_in_freerg_list(struct pcb_t *caller, int vmaid, struct vm_rg_struct *currg);
 int tlb_change_all_page_tables_of(struct pcb_t *proc, struct memphy_struct *mp);
 int tlb_flush_tlb_of(struct pcb_t *proc, struct memphy_struct *mp);
 int tlballoc(struct pcb_t *proc, uint32_t size, uint32_t reg_index);

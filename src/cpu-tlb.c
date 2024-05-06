@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #ifdef CPU_TLB
-static pthread_mutex_t mmvm_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t cpu_tlb = PTHREAD_MUTEX_INITIALIZER;
 int tlb_change_all_page_tables_of(struct pcb_t *proc, struct memphy_struct *mp)
 {
   /* TODO update all page table directory info
@@ -45,7 +45,7 @@ int tlb_flush_tlb_of(struct pcb_t *proc, struct memphy_struct *mp)
  */
 int tlballoc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
 {
-  pthread_mutex_lock(&mmvm_lock);
+  pthread_mutex_lock(&cpu_tlb);
   int addr, val;
 
   /* By default using vmaid = 0 */
@@ -55,7 +55,7 @@ int tlballoc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
   /* by using tlb_cache_read()/tlb_cache_write()*/
   TLBMEMPHY_dump(proc->tlb);
   print_pgtbl(proc, 0, -1);
-  pthread_mutex_unlock(&mmvm_lock);
+  pthread_mutex_unlock(&cpu_tlb);
   return val;
 }
 
@@ -66,12 +66,14 @@ int tlballoc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
  */
 int tlbfree_data(struct pcb_t *proc, uint32_t reg_index)
 {
+  pthread_mutex_lock(&cpu_tlb);
   __free(proc, 0, reg_index);
 
   /* TODO update TLB CACHED frame num of freed page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
   TLBMEMPHY_dump(proc->tlb);
   print_pgtbl(proc, 0, -1);
+  pthread_mutex_unlock(&cpu_tlb);
   return 0;
 }
 
@@ -128,7 +130,6 @@ int tlbread(struct pcb_t *proc, uint32_t source,
     val = __read(proc, 0, source, offset, &data);
     if (val == 0)
     {
-      printf("pid: %d page: %d value: %d 11111111111111111111111111\n", proc->pid, page, data);
       tlb_cache_write(proc->tlb, proc->pid, page, data);
     }
     TLBMEMPHY_dump(proc->tlb);
