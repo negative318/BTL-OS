@@ -23,7 +23,7 @@
 #include <pthread.h>
 #define GET_TAG(tlb_page) GETVAL(tlb_page, GENMASK(8, 0), 0)
 #define GET_PID(tlb_page) GETVAL(tlb_page, GENMASK(29, 9), 9)
-#define GET_VALID(tlb_page) GETVAL(tlb_page, BIT(31), 31)
+#define GET_VALID(tlb_page) GETVAL(tlb_page, BIT(30), 30)
 #define init_tlbcache(mp, sz, ...) init_memphy(mp, sz, (1, ##__VA_ARGS__))
 #define SET_PID(tlb_page, pid) SETVAL(tlb_page, pid, GENMASK(29, 9), 9);
 static pthread_mutex_t tlb_lock;
@@ -42,6 +42,21 @@ bit 8-0: TAG
  *  @pgnum: page number
  *  @value: obtained value
  */
+
+int tlb_clear_tlb_entry(struct memphy_struct *mp, int pid, int pgnum)
+{
+   printf("clear11111111111111111111111111111111111\n");
+   int index = pgnum % 32;
+   if (GET_PID(tlb[index][0]) == pid)
+   {
+      printf("clear22222222222222222222222222222222\n");
+      GET_VALID(tlb[index][0]);
+      CLRBIT(tlb[index][0], BIT(30));
+      SET_PID(tlb[index][0], 0);
+      tlb[index][1] = 0;
+   }
+   return 0;
+}
 
 int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, int *value)
 {
@@ -82,7 +97,7 @@ int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, int value)
    int tag = pgnum / 32;
    tlb[index][1] = value;
    SET_PID(tlb[index][0], pid);
-   SETBIT(tlb[index][0], BIT(31));
+   SETBIT(tlb[index][0], BIT(30));
 
    return -1;
 }

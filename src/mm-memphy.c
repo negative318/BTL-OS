@@ -139,10 +139,10 @@ int MEMPHY_format(struct memphy_struct *mp, int pagesz)
 int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
 {
    struct framephy_struct *fp = mp->free_fp_list;
-
    if (fp == NULL)
+   {
       return -1;
-
+   }
    *retfpn = fp->fpn;
    mp->free_fp_list = fp->fp_next;
 

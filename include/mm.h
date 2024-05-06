@@ -171,6 +171,7 @@ int print_pgtbl(struct pcb_t *ip, uint32_t start, uint32_t end);
 #ifdef CPU_TLB
 int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, int *value);
 int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, int value);
+int tlb_clear_tlb_entry(struct memphy_struct *mp, int pid, int pgnum);
 #endif
 
 #endif

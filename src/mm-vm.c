@@ -122,7 +122,6 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
    * inc_vma_limit(caller, vmaid, inc_sz)
    */
   inc_vma_limit(caller, vmaid, inc_sz);
-
   /*Successful increase limit */
   caller->mm->symrgtbl[rgid].rg_start = old_sbrk;
   caller->mm->symrgtbl[rgid].rg_end = old_sbrk + size;
@@ -192,28 +191,30 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
     pthread_mutex_unlock(&mmvm_lock);
     return -1;
   }
-  // int inc_sz = rgnode->rg_end - rgnode->rg_start;
-  // int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
-  // int incnumpage = inc_amt / PAGING_PAGESZ;
-  // int pgn = PAGING_PGN(rgnode->rg_start);
-  // for (int i = 0; i < incnumpage; i++)
-  // {
-  //   MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
-  //   SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
-  //   clear_pgn_node(caller, pgn + i);
-  // }
-  // #ifdef CPU_TLB
-  //   int inc_sz = rgnode->rg_end - rgnode->rg_start;
-  //   int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
-  //   int incnumpage = inc_amt / PAGING_PAGESZ;
-  //   int pgn = PAGING_PGN(rgnode->rg_start);
-  //   for (int i = 0; i < incnumpage; i++)
-  //   {
-  //     MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
-  //     SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
-  //     clear_pgn_node(caller, pgn + i);
-  //   }
-  // #endif
+// int inc_sz = rgnode->rg_end - rgnode->rg_start;
+// int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
+// int incnumpage = inc_amt / PAGING_PAGESZ;
+// int pgn = PAGING_PGN(rgnode->rg_start);
+// for (int i = 0; i < incnumpage; i++)
+// {
+//   MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
+//   SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
+//   clear_pgn_node(caller, pgn + i);
+// }
+#ifdef CPU_TLB
+  int inc_sz = rgnode->rg_end - rgnode->rg_start;
+  int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
+  int incnumpage = inc_amt / PAGING_PAGESZ;
+  int pgn = PAGING_PGN(rgnode->rg_start);
+  for (int i = 0; i < incnumpage; i++)
+  {
+    printf("pid: %d, page: %daaaaaaaaaaaaaaaaaa\n", caller->pid, pgn + i);
+    tlb_clear_tlb_entry(caller->tlb, caller->pid, pgn + i);
+    MEMPHY_put_freefp(caller->mram, PAGING_FPN(caller->mm->pgd[pgn + i]));
+    SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
+    clear_pgn_node(caller, pgn + i);
+  }
+#endif
   struct vm_rg_struct *freerg_node = malloc(sizeof(struct vm_rg_struct));
   freerg_node->rg_start = rgnode->rg_start;
   freerg_node->rg_end = rgnode->rg_end;
@@ -587,15 +588,14 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
   {
     return -1; /*Overlap and failed allocation */
   }
-
   /* The obtained vm area (only)
    * now will be alloc real ram region */
   cur_vma->vm_end += inc_sz;
   cur_vma->sbrk += inc_sz;
+
   if (vm_map_ram(caller, area->rg_start, area->rg_end,
                  old_end, incnumpage, newrg) < 0)
     return -1; /* Map the memory to MEMRAM */
-
   return 0;
 }
 
