@@ -3,9 +3,6 @@
 #include "bitops.h"
 #include "common.h"
 
-#define MAX_TLB 32
-static uint32_t *tlb[MAX_TLB];
-
 /* CPU Bus definition */
 #define PAGING_CPU_BUS_WIDTH 22 /* 22bit bus - MAX SPACE 4MB */
 #define PAGING_PAGESZ 256       /* 256B or 8-bits PAGE NUMBER */

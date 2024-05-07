@@ -93,14 +93,20 @@ int MEMPHY_seq_write(struct memphy_struct *mp, int addr, BYTE value)
  */
 int MEMPHY_write(struct memphy_struct *mp, int addr, BYTE data)
 {
+
    if (mp == NULL)
       return -1;
-
+   // printf("aaaaaaaaaaaaaaaaaaaaaaa%d\n", addr);
    if (mp->rdmflg)
-      mp->storage[addr] = data;
-   else /* Sequential access device */
-      return MEMPHY_seq_write(mp, addr, data);
+   {
 
+      // printf("aaaaaaaaaaaaaaaaaaaaaaa%d\n", addr);
+      mp->storage[addr] = data;
+   }
+   else /* Sequential access device */
+   {
+      return MEMPHY_seq_write(mp, addr, data);
+   }
    return 0;
 }
 

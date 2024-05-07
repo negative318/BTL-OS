@@ -34,7 +34,8 @@ bit 29-9: PID
 bit 8-0: TAG
 
 */
-
+#define MAX_TLB 8
+static uint32_t *tlb[MAX_TLB];
 /*
  *  tlb_cache_read read TLB cache device
  *  @mp: memphy struct
@@ -45,12 +46,11 @@ bit 8-0: TAG
 
 int tlb_clear_tlb_entry(struct memphy_struct *mp, int pid, int pgnum)
 {
-   printf("clear11111111111111111111111111111111111\n");
-   int index = pgnum % 32;
+   // printf("clear11111111111111111111111111111111111\n");
+   int index = pgnum % 8;
    if (GET_PID(tlb[index][0]) == pid)
    {
-      printf("clear22222222222222222222222222222222\n");
-      GET_VALID(tlb[index][0]);
+      // printf("clear22222222222222222222222222222222\n");
       CLRBIT(tlb[index][0], BIT(30));
       SET_PID(tlb[index][0], 0);
       tlb[index][1] = 0;
@@ -64,8 +64,8 @@ int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, int *value)
     *      cache line by employing:
     *      direct mapped, associated mapping etc.
     */
-   int index = pgnum % 32;
-   int tag = pgnum / 32;
+   int index = pgnum % 8;
+   int tag = pgnum / 8;
    uint32_t tlb_page = tlb[index][0];
    if (tlb_page & BIT(30))
    {
@@ -73,7 +73,7 @@ int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, int *value)
       int pid_page = GET_PID(tlb_page);
       if (tag == tag_page && pid == pid_page)
       {
-         value = tlb[index][1];
+         *value = (int)tlb[index][1];
          return 0;
       }
    }
@@ -93,8 +93,7 @@ int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, int value)
     *      cache line by employing:
     *      direct mapped, associated mapping etc.
     */
-   int index = pgnum % 32;
-   int tag = pgnum / 32;
+   int index = pgnum % 8;
    tlb[index][1] = value;
    SET_PID(tlb[index][0], pid);
    SETBIT(tlb[index][0], BIT(30));
@@ -152,7 +151,6 @@ int TLBMEMPHY_dump(struct memphy_struct *mp)
    {
       int valid = GET_VALID(tlb[i][0]);
       int pid = GET_PID(tlb[i][0]);
-      int tag = GET_TAG(tlb[i][0]);
       int frame = tlb[i][1];
       printf("%02d %d %08d %08d\n", i, valid, pid, frame);
    }
@@ -174,6 +172,7 @@ int init_tlbmemphy(struct memphy_struct *mp, int max_size)
       tlb[i][1] = 0; // frame number
    }
    mp->maxsz = max_size;
+   printf("TLB ALLOC:\n");
    TLBMEMPHY_dump(mp);
    mp->rdmflg = 1;
    pthread_mutex_init(&tlb_lock, NULL);

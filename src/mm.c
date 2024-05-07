@@ -103,16 +103,16 @@ int vmap_page_range(struct pcb_t *caller,           // process call
   for (; pgit < pgnum; ++pgit)
   {
     fpit = frames;
-    printf("freamdissfhjuhybgvfcsuvndefvvb4trvdcsasfdggfdsunvdunvudnv:%d %d %d\n", pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]), fpit->fpn);
+    // printf("freamdissfhjuhybgvfcsuvndefvvb4trvdcsasfdggfdsunvdunvudnv:%d %d %d\n", pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]), fpit->fpn);
     pte_set_fpn(&caller->mm->pgd[pgn + pgit], fpit->fpn);
-    printf("freamdissfhjuhybgvfcsuvndefvvb4trvdcsasfdggfdsunvdunvudnv:%d %d %d\n", pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]), fpit->fpn);
+    // printf("freamdissfhjuhybgvfcsuvndefvvb4trvdcsasfdggfdsunvdunvudnv:%d %d %d\n", pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]), fpit->fpn);
 #ifdef CPU_TLB
-    printf("pid: %d page: %d farme: %d 4444444444444444444444444444\n", caller->pid, pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]));
+    // printf("pid: %d page: %d farme: %d 4444444444444444444444444444\n", caller->pid, pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]));
     tlb_cache_write(caller->tlb, caller->pid, pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]));
 
 #endif
 #ifdef IODUMP
-    printf("========PID: %d ADDR: %d --- PAGE: %d ----> FRAME: %d\n", caller->pid, addr, pgn + pgit, fpit->fpn);
+    printf("========PID: %d --- PAGE: %d ----> FRAME: %d\n", caller->pid, pgn + pgit, fpit->fpn);
 #endif
     frames = frames->fp_next;
     free(fpit);

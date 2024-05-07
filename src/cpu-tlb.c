@@ -30,11 +30,6 @@ int tlb_change_all_page_tables_of(struct pcb_t *proc, struct memphy_struct *mp)
 int tlb_flush_tlb_of(struct pcb_t *proc, struct memphy_struct *mp)
 {
   /* TODO flush tlb cached*/
-  for (int i = 0; i < MAX_TLB; i++)
-  {
-    tlb[i][0] = 0;
-    tlb[i][1] = 0;
-  }
   return 0;
 }
 
@@ -53,8 +48,8 @@ int tlballoc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
 
   /* TODO update TLB CACHED frame num of the new allocated page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
-  TLBMEMPHY_dump(proc->tlb);
   print_pgtbl(proc, 0, -1);
+  TLBMEMPHY_dump(proc->tlb);
   pthread_mutex_unlock(&cpu_tlb);
   return val;
 }
@@ -68,11 +63,10 @@ int tlbfree_data(struct pcb_t *proc, uint32_t reg_index)
 {
   pthread_mutex_lock(&cpu_tlb);
   __free(proc, 0, reg_index);
-
   /* TODO update TLB CACHED frame num of freed page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
-  TLBMEMPHY_dump(proc->tlb);
   print_pgtbl(proc, 0, -1);
+  TLBMEMPHY_dump(proc->tlb);
   pthread_mutex_unlock(&cpu_tlb);
   return 0;
 }
@@ -86,8 +80,8 @@ int tlbfree_data(struct pcb_t *proc, uint32_t reg_index)
 int tlbread(struct pcb_t *proc, uint32_t source,
             uint32_t offset, uint32_t destination)
 {
-  BYTE data = -1, frmnum = -1;
-  int val = 0;
+  BYTE data = -1;
+  int frmnum = -1, val = 0;
   /* TODO retrieve TLB CACHED frame num of accessing page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
   /* frmnum is return value of tlb_cache_read/write value*/
@@ -122,7 +116,7 @@ int tlbread(struct pcb_t *proc, uint32_t source,
 
   if (frmnum >= 0)
   {
-    int physical_addr = frmnum << PAGING_ADDR_FPN_HIBIT + offset;
+    int physical_addr = (frmnum << PAGING_ADDR_FPN_HIBIT) + offset;
     MEMPHY_read(proc->mram, physical_addr, &data);
   }
   else
@@ -132,8 +126,8 @@ int tlbread(struct pcb_t *proc, uint32_t source,
     {
       tlb_cache_write(proc->tlb, proc->pid, page, data);
     }
-    TLBMEMPHY_dump(proc->tlb);
     print_pgtbl(proc, 0, -1);
+    TLBMEMPHY_dump(proc->tlb);
   }
   destination = (uint32_t)data;
 
@@ -154,7 +148,6 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
 {
   int val = 0;
   BYTE frmnum = -1;
-
   /* TODO retrieve TLB CACHED frame num of accessing page(s))*/
   /* by using tlb_cache_read()/tlb_cache_write()
   frmnum is return value of tlb_cache_read/write value*/
@@ -168,7 +161,7 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
   int addr = region->rg_start + offset;
   int page = PAGING_PGN(addr);
   frmnum = PAGING_FPN(page);
-  printf("pid: %d page: %d farme: %d 2222222222222222222222222222222\n", proc->pid, page, frmnum);
+  // printf("pid: %d page: %d farme: %d 2222222222222222222222222222222\n", proc->pid, page, frmnum);
   tlb_cache_write(proc->tlb, proc->pid, page, frmnum);
 
 #ifdef IODUMP
@@ -184,12 +177,15 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
   }
 #ifdef PAGETBL_DUMP
   print_pgtbl(proc, 0, -1); // print max TBL
+  TLBMEMPHY_dump(proc->tlb);
 #endif
   MEMPHY_dump(proc->mram);
 #endif
+
   if (frmnum >= 0)
   {
-    int phyaddr = frmnum << PAGING_ADDR_FPN_LOBIT + offset;
+
+    int phyaddr = (frmnum << PAGING_ADDR_FPN_LOBIT) + offset;
     MEMPHY_write(proc->mram, phyaddr, data);
   }
   else
@@ -197,15 +193,14 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
     val = __write(proc, 0, destination, offset, data);
     if (val == 0)
     {
-      printf("pid: %d page: %d value: %d 333333333333333333333333\n", proc->pid, page, data);
+      // printf("pid: %d page: %d value: %d 333333333333333333333333\n", proc->pid, page, data);
       tlb_cache_write(proc->tlb, proc->pid, page, data);
     }
-    TLBMEMPHY_dump(proc->tlb);
     print_pgtbl(proc, 0, -1);
+    TLBMEMPHY_dump(proc->tlb);
   }
   /* TODO update TLB CACHED with frame num of recent accessing page(s)*/
   /* by using tlb_cache_read()/tlb_cache_write()*/
-
   return val;
 }
 

@@ -21,7 +21,7 @@ Time slot   6
 	CPU 0: Put process  1 to run queue
 	CPU 0: Dispatched process  1
 read region=1 offset=20 value=100
-print_pgtbl: 0 - 1024
+print_pgtbl: 0 - 1024x
 00000000: 80000001
 00000004: 80000000
 00000008: 80000003
