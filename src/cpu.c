@@ -67,13 +67,15 @@ int run(struct pcb_t *proc)
 	struct inst_t ins = proc->code->text[proc->pc];
 	proc->pc++;
 	int stat = 1;
-
-	printf("==========================START-INSTRUCTIONS==========================\n");
-	printf("PID = %08d, ", proc->pid);
+	if (ins.opcode != CALC)
+	{
+		printf("==========================START-INSTRUCTIONS==========================\n");
+		printf("PID = %08d, ", proc->pid);
+	}
 	switch (ins.opcode)
 	{
 	case CALC:
-		printf("Instructions: CALC\n");
+		// printf("Instructions: CALC\n");
 		stat = calc(proc);
 		break;
 	case ALLOC:
@@ -119,6 +121,9 @@ int run(struct pcb_t *proc)
 	default:
 		stat = 1;
 	}
-	printf("===========================END-INSTRUCTIONS===========================\n");
+	if (ins.opcode != CALC)
+	{
+		printf("===========================END-INSTRUCTIONS===========================\n");
+	}
 	return stat;
 }

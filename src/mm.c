@@ -112,7 +112,7 @@ int vmap_page_range(struct pcb_t *caller,           // process call
 
 #endif
 #ifdef IODUMP
-    printf("========PID: %d addr: %d --- PAGE: %d ----> FRAME: %d\n", caller->pid, addr, pgn + pgit, fpit->fpn);
+    printf("========PID: %d addr: %d --- PAGE: %d ----> FRAME: %d\n", caller->pid, 256 * (pgn + pgit), pgn + pgit, fpit->fpn);
 #endif
     frames = frames->fp_next;
     free(fpit);
