@@ -195,8 +195,6 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
 {
   pthread_mutex_lock(&mmvm_lock);
 
-  // print_pgtbl(caller, 0, -1);
-  // printf("6666666666666666666666666666");
   if (rgid < 0 || rgid > PAGING_MAX_SYMTBL_SZ)
   {
     pthread_mutex_unlock(&mmvm_lock);
@@ -211,16 +209,6 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
     pthread_mutex_unlock(&mmvm_lock);
     return -1;
   }
-  // int inc_sz = rgnode->rg_end - rgnode->rg_start;
-  // int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
-  // int incnumpage = inc_amt / PAGING_PAGESZ;
-  // int pgn = PAGING_PGN(rgnode->rg_start);
-  // for (int i = 0; i < incnumpage; i++)
-  // {
-  //   MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
-  //   SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
-  //   clear_pgn_node(caller, pgn + i);
-  // }
   int inc_sz = rgnode->rg_end - rgnode->rg_start;
   int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
   int incnumpage = inc_amt / PAGING_PAGESZ;
@@ -228,15 +216,11 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   for (int i = 0; i < incnumpage; i++)
   {
 
-    // printf("pid: %d, page: %daaaaaaaaaaaaaaaaaa\n", caller->pid, pgn + i);
 #ifdef CPU_TLB
     tlb_clear_tlb_entry(caller->tlb, caller->pid, pgn + i);
 #endif
     MEMPHY_put_freefp(caller->mram, PAGING_FPN(caller->mm->pgd[pgn + i]));
     CLRBIT(caller->mm->pgd[pgn + i], PAGING_PTE_PRESENT_MASK);
-    // printf("77777777777777777777777777777\n");
-    // print_pgtbl(caller, 0, -1);
-    // printf("88888888888888888888888888888\n");
     clear_pgn_node(caller, pgn + i);
   }
   struct vm_rg_struct *freerg_node = malloc(sizeof(struct vm_rg_struct));

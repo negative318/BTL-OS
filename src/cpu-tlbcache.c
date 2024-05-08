@@ -26,6 +26,7 @@
 #define GET_VALID(tlb_page) GETVAL(tlb_page, BIT(30), 30)
 #define init_tlbcache(mp, sz, ...) init_memphy(mp, sz, (1, ##__VA_ARGS__))
 #define SET_PID(tlb_page, pid) SETVAL(tlb_page, pid, GENMASK(29, 9), 9);
+#define SET_TAG(tlb_page, tag) SETVAL(tlb_page, tag, GENMASK(8, 0), 0);
 static pthread_mutex_t tlb_lock;
 /*
 bit 31: TAG USED
@@ -94,7 +95,9 @@ int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, int value)
     *      direct mapped, associated mapping etc.
     */
    int index = pgnum % 8;
+   int tag = pgnum / 8;
    tlb[index][1] = value;
+   SET_TAG(tlb[index][0], tag);
    SET_PID(tlb[index][0], pid);
    SETBIT(tlb[index][0], BIT(30));
 
