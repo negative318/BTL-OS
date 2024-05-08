@@ -23,23 +23,23 @@ int enlist_vm_freerg_list(struct mm_struct *mm, struct vm_rg_struct *rg_elmt)
 
   if (rg_elmt->rg_start >= rg_elmt->rg_end)
     return -1;
-  while (rg_node != NULL)
-  {
-    // printf("00000000000000000000000000000000000000000000000000000000000000000000000%d %d %d %d\n", rg_node->rg_start, rg_node->rg_end, rg_elmt->rg_start, rg_elmt->rg_end);
-    if (rg_node->rg_end == rg_elmt->rg_start)
-    {
-      rg_node->rg_end = rg_elmt->rg_end;
-      // printf("ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg");
-      return 0;
-    }
-    else if (rg_node->rg_start == rg_elmt->rg_end)
-    {
-      // printf("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
-      rg_node->rg_start = rg_elmt->rg_start;
-      return 0;
-    }
-    rg_node = rg_node->rg_next;
-  }
+  // while (rg_node != NULL)
+  // {
+  //   // printf("00000000000000000000000000000000000000000000000000000000000000000000000%d %d %d %d\n", rg_node->rg_start, rg_node->rg_end, rg_elmt->rg_start, rg_elmt->rg_end);
+  //   if (rg_node->rg_end == rg_elmt->rg_start)
+  //   {
+  //     rg_node->rg_end = rg_elmt->rg_end;
+  //     // printf("ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg");
+  //     return 0;
+  //   }
+  //   else if (rg_node->rg_start == rg_elmt->rg_end)
+  //   {
+  //     // printf("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+  //     rg_node->rg_start = rg_elmt->rg_start;
+  //     return 0;
+  //   }
+  //   rg_node = rg_node->rg_next;
+  // }
   if (rg_node != NULL)
     rg_elmt->rg_next = rg_node;
 
@@ -101,7 +101,8 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
   pthread_mutex_unlock(&mmvm_lock);
   /*Allocate at the toproof */
   struct vm_rg_struct rgnode;
-  if (get_free_vmrg_area(caller, vmaid, size, &rgnode) == 0)
+  int align_size = PAGING_PAGE_ALIGNSZ(size);
+  if (get_free_vmrg_area(caller, vmaid, align_size, &rgnode) == 0)
   {
     caller->mm->symrgtbl[rgid].rg_start = rgnode.rg_start;
     caller->mm->symrgtbl[rgid].rg_end = rgnode.rg_end;
@@ -120,7 +121,7 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
     }
 
     *alloc_addr = rgnode.rg_start;
-    // print_pgtbl(caller, 0, -1);
+    print_pgtbl(caller, 0, -1);
     pthread_mutex_unlock(&mmvm_lock);
     return 0;
   }
@@ -153,7 +154,7 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
     rg_free->rg_end = remain_rg->sbrk;
     enlist_vm_freerg_list(caller->mm, rg_free);
   }
-  // print_pgtbl(caller, 0, -1);
+  print_pgtbl(caller, 0, -1);
   pthread_mutex_unlock(&mmvm_lock);
 
   return 0;
@@ -210,17 +211,16 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
     pthread_mutex_unlock(&mmvm_lock);
     return -1;
   }
-// int inc_sz = rgnode->rg_end - rgnode->rg_start;
-// int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
-// int incnumpage = inc_amt / PAGING_PAGESZ;
-// int pgn = PAGING_PGN(rgnode->rg_start);
-// for (int i = 0; i < incnumpage; i++)
-// {
-//   MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
-//   SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
-//   clear_pgn_node(caller, pgn + i);
-// }
-#ifdef CPU_TLB
+  // int inc_sz = rgnode->rg_end - rgnode->rg_start;
+  // int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
+  // int incnumpage = inc_amt / PAGING_PAGESZ;
+  // int pgn = PAGING_PGN(rgnode->rg_start);
+  // for (int i = 0; i < incnumpage; i++)
+  // {
+  //   MEMPHY_put_freefp(caller->mram, caller->mm->pgd[pgn + i]);
+  //   SETBIT(caller->mm->pgd[pgn + i], PAGING_PTE_DIRTY_MASK);
+  //   clear_pgn_node(caller, pgn + i);
+  // }
   int inc_sz = rgnode->rg_end - rgnode->rg_start;
   int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
   int incnumpage = inc_amt / PAGING_PAGESZ;
@@ -229,7 +229,9 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   {
 
     // printf("pid: %d, page: %daaaaaaaaaaaaaaaaaa\n", caller->pid, pgn + i);
+#ifdef CPU_TLB
     tlb_clear_tlb_entry(caller->tlb, caller->pid, pgn + i);
+#endif
     MEMPHY_put_freefp(caller->mram, PAGING_FPN(caller->mm->pgd[pgn + i]));
     CLRBIT(caller->mm->pgd[pgn + i], PAGING_PTE_PRESENT_MASK);
     // printf("77777777777777777777777777777\n");
@@ -237,7 +239,6 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
     // printf("88888888888888888888888888888\n");
     clear_pgn_node(caller, pgn + i);
   }
-#endif
   struct vm_rg_struct *freerg_node = malloc(sizeof(struct vm_rg_struct));
   freerg_node->rg_start = rgnode->rg_start;
   freerg_node->rg_end = rgnode->rg_end;
@@ -249,7 +250,7 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
 
   /*enlist the obsoleted memory region */
   enlist_vm_freerg_list(caller->mm, freerg_node);
-
+  print_pgtbl(caller, 0, -1);
   pthread_mutex_unlock(&mmvm_lock);
   return 0;
 }
@@ -434,12 +435,16 @@ int pgread(
 {
   BYTE data;
   int val = __read(proc, 0, source, offset, &data);
-
   destination = (uint32_t)data;
+  if (val == -1)
+  {
+    print_pgtbl(proc, 0, -1);
+    return -1;
+  }
 #ifdef IODUMP
   printf("read region=%d offset=%d value=%d\n", source, offset, data);
 #ifdef PAGETBL_DUMP
-  // print_pgtbl(proc, 0, -1); // print max TBL
+  print_pgtbl(proc, 0, -1); // print max TBL
 #endif
   MEMPHY_dump(proc->mram);
 #endif
