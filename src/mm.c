@@ -90,7 +90,6 @@ int vmap_page_range(struct pcb_t *caller,           // process call
   // no guarantee all given pages are mapped
   // uint32_t * pte = malloc(sizeof(uint32_t));
   struct framephy_struct *fpit = malloc(sizeof(struct framephy_struct));
-  // int  fpn;
   int pgit = 0;
   int pgn = PAGING_PGN(addr);
 
@@ -103,11 +102,8 @@ int vmap_page_range(struct pcb_t *caller,           // process call
   for (; pgit < pgnum; ++pgit)
   {
     fpit = frames;
-    // printf("freamdissfhjuhybgvfcsuvndefvvb4trvdcsasfdggfdsunvdunvudnv:%d %d %d\n", pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]), fpit->fpn);
     pte_set_fpn(&caller->mm->pgd[pgn + pgit], fpit->fpn);
-    // printf("freamdissfhjuhybgvfcsuvndefvvb4trvdcsasfdggfdsunvdunvudnv:%d %d %d\n", pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]), fpit->fpn);
 #ifdef CPU_TLB
-    // printf("pid: %d page: %d farme: %d 4444444444444444444444444444\n", caller->pid, pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]));
     tlb_cache_write(caller->tlb, caller->pid, pgn + pgit, PAGING_FPN(caller->mm->pgd[pgn + pgit]));
 
 #endif

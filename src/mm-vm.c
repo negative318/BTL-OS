@@ -23,23 +23,6 @@ int enlist_vm_freerg_list(struct mm_struct *mm, struct vm_rg_struct *rg_elmt)
 
   if (rg_elmt->rg_start >= rg_elmt->rg_end)
     return -1;
-  // while (rg_node != NULL)
-  // {
-  //   // printf("00000000000000000000000000000000000000000000000000000000000000000000000%d %d %d %d\n", rg_node->rg_start, rg_node->rg_end, rg_elmt->rg_start, rg_elmt->rg_end);
-  //   if (rg_node->rg_end == rg_elmt->rg_start)
-  //   {
-  //     rg_node->rg_end = rg_elmt->rg_end;
-  //     // printf("ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg");
-  //     return 0;
-  //   }
-  //   else if (rg_node->rg_start == rg_elmt->rg_end)
-  //   {
-  //     // printf("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
-  //     rg_node->rg_start = rg_elmt->rg_start;
-  //     return 0;
-  //   }
-  //   rg_node = rg_node->rg_next;
-  // }
   if (rg_node != NULL)
     rg_elmt->rg_next = rg_node;
 
@@ -111,12 +94,9 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
     int inc_sz = rgnode.rg_end - rgnode.rg_start;
     int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
     int incnumpage = inc_amt / PAGING_PAGESZ;
-
-    // printf("vvvvvvvvvvvvvvvvvvvvvvvvvvvvv%d %d %d\n", rgnode.rg_start, rgnode.rg_end, incnumpage);
     if (vm_map_ram(caller, rgnode.rg_start, rgnode.rg_end, rgnode.rg_start, incnumpage, newrg) < 0)
     {
       pthread_mutex_unlock(&mmvm_lock);
-      // print_pgtbl(caller,0,-1);
       return -1;
     }
 
@@ -131,7 +111,6 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
   /*Attempt to increate limit to get space */
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
   int inc_sz = PAGING_PAGE_ALIGNSZ(size);
-  // int inc_limit_ret
   int old_sbrk;
 
   old_sbrk = cur_vma->sbrk;
@@ -300,12 +279,7 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
     /* Copy target frame from swap to mem */
     __swap_cp_page(caller->active_mswp, tgtfpn, caller->mram, vicfpn);
 
-    // print_pgtbl(caller, 0, -1);
-    // printf("setaaaaaaaaaaaaaaaa%d: %d: %08x\n", vicpgn, swpfpn, mm->pgd[vicpgn]);
-
     pte_set_swap(&mm->pgd[vicpgn], 0, swpfpn);
-
-    // print_pgtbl(caller, 0, -1);
 
     /* Update its online status of the target page */
     pte_set_fpn(&mm->pgd[pgn], vicfpn);
@@ -369,7 +343,6 @@ int check_if_in_freerg_list(struct pcb_t *caller, int vmaid, struct vm_rg_struct
   /* Traverse on list of free vm region to find a fit space */
   while (rgit != NULL)
   {
-    // printf("[Debug] %ld %ld %ld %ld\n", rgit->rg_start, rgit->rg_end, currg->rg_start, currg->rg_end);
     if (rgit->rg_start == currg->rg_start && rgit->rg_end == currg->rg_end)
     {
       return -1;
@@ -422,7 +395,6 @@ int pgread(
   destination = (uint32_t)data;
   if (val == -1)
   {
-    // print_pgtbl(proc, 0, -1);
     return -1;
   }
 #ifdef IODUMP
@@ -653,20 +625,16 @@ int get_free_vmrg_area(struct pcb_t *caller, int vmaid, int size, struct vm_rg_s
   /* Probe unintialized newrg */
   newrg->rg_start = newrg->rg_end = -1;
   int i = 0;
-  // int rg_end = PAGING_PAGE_ALIGNSZ(rgit->rg_end);
   /* Traverse on list of free vm region to find a fit space */
   while (rgit != NULL)
   {
-    // printf("mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm%d %d\n", rgit->rg_start, rgit->rg_end);
     if ((rgit->rg_start + size <= rgit->rg_end))
     { /* Current region has enough space */
       newrg->rg_start = rgit->rg_start;
       newrg->rg_end = rgit->rg_start + size;
-      // printf("bbbbbbbbbbbbbbbbbbbbbbbbbbbb%d %d\n", newrg->rg_start, newrg->rg_end);
       /* Update left space in chosen region */
       if (rgit->rg_start + size < rgit->rg_end)
       {
-        // printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%d %d\n", newrg->rg_start, newrg->rg_end);
         rgit->rg_start = rgit->rg_start + size;
       }
       else

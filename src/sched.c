@@ -80,7 +80,6 @@ struct pcb_t *get_mlq_proc(void)
 			pthread_mutex_unlock(&queue_lock);
 			continue;
 		}
-		// printf("iii:...................................%d\n", i);
 		if (empty(&mlq_ready_queue[i]))
 		{
 			if (flag == 1 && i == MAX_PRIO - 1)
@@ -104,7 +103,6 @@ struct pcb_t *get_mlq_proc(void)
 			pthread_mutex_unlock(&queue_lock);
 			continue;
 		}
-		// printf("i:.... %d slot: %d\n", i, slot[i]);
 		proc = dequeue(&mlq_ready_queue[i]);
 		slot[i]--;
 		pthread_mutex_unlock(&queue_lock);

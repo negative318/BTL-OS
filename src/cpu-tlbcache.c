@@ -47,15 +47,15 @@ static uint32_t *tlb[MAX_TLB];
 
 int tlb_clear_tlb_entry(struct memphy_struct *mp, int pid, int pgnum)
 {
-   // printf("clear11111111111111111111111111111111111\n");
+   pthread_mutex_lock(&tlb_lock);
    int index = pgnum % 8;
    if (GET_PID(tlb[index][0]) == pid)
    {
-      // printf("clear22222222222222222222222222222222\n");
       CLRBIT(tlb[index][0], BIT(30));
       SET_PID(tlb[index][0], 0);
       tlb[index][1] = 0;
    }
+   pthread_mutex_unlock(&tlb_lock);
    return 0;
 }
 
@@ -65,6 +65,7 @@ int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, int *value)
     *      cache line by employing:
     *      direct mapped, associated mapping etc.
     */
+   pthread_mutex_lock(&tlb_lock);
    int index = pgnum % 8;
    int tag = pgnum / 8;
    uint32_t tlb_page = tlb[index][0];
@@ -78,6 +79,7 @@ int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, int *value)
          return 0;
       }
    }
+   pthread_mutex_unlock(&tlb_lock);
    return -1;
 }
 
@@ -94,13 +96,14 @@ int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, int value)
     *      cache line by employing:
     *      direct mapped, associated mapping etc.
     */
+   pthread_mutex_lock(&tlb_lock);
    int index = pgnum % 8;
    int tag = pgnum / 8;
    tlb[index][1] = value;
    SET_TAG(tlb[index][0], tag);
    SET_PID(tlb[index][0], pid);
    SETBIT(tlb[index][0], BIT(30));
-
+   pthread_mutex_unlock(&tlb_lock);
    return -1;
 }
 
@@ -112,11 +115,13 @@ int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, int value)
  */
 int TLBMEMPHY_read(struct memphy_struct *mp, int addr, BYTE *value)
 {
+   pthread_mutex_lock(&tlb_lock);
    if (mp == NULL)
       return -1;
 
    /* TLB cached is random access by native */
    *value = mp->storage[addr];
+   pthread_mutex_unlock(&tlb_lock);
    return 0;
 }
 
@@ -128,12 +133,13 @@ int TLBMEMPHY_read(struct memphy_struct *mp, int addr, BYTE *value)
  */
 int TLBMEMPHY_write(struct memphy_struct *mp, int addr, BYTE data)
 {
+   pthread_mutex_lock(&tlb_lock);
    if (mp == NULL)
       return -1;
 
    /* TLB cached is random access by native */
    mp->storage[addr] = data;
-
+   pthread_mutex_unlock(&tlb_lock);
    return 0;
 }
 
@@ -144,7 +150,6 @@ int TLBMEMPHY_write(struct memphy_struct *mp, int addr, BYTE data)
 
 int TLBMEMPHY_dump(struct memphy_struct *mp)
 {
-   // in ra các PID, TAG, FPN trong tlb
    /*TODO dump memphy contnt mp->storage
     *     for tracing the memory content
     */
