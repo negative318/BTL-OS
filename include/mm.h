@@ -164,7 +164,7 @@ int print_list_vma(struct vm_area_struct *rg);
 
 int print_list_pgn(struct pgn_t *ip);
 int print_pgtbl(struct pcb_t *ip, uint32_t start, uint32_t end);
-
+int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller);
 #ifdef CPU_TLB
 int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, int *value);
 int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, int value);

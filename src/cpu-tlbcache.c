@@ -76,6 +76,7 @@ int tlb_cache_read(struct memphy_struct *mp, int pid, int pgnum, int *value)
       if (tag == tag_page && pid == pid_page)
       {
          *value = (int)tlb[index][1];
+         pthread_mutex_unlock(&tlb_lock);
          return 0;
       }
    }
@@ -117,8 +118,10 @@ int TLBMEMPHY_read(struct memphy_struct *mp, int addr, BYTE *value)
 {
    pthread_mutex_lock(&tlb_lock);
    if (mp == NULL)
+   {
+      pthread_mutex_unlock(&tlb_lock);
       return -1;
-
+   }
    /* TLB cached is random access by native */
    *value = mp->storage[addr];
    pthread_mutex_unlock(&tlb_lock);
@@ -135,8 +138,10 @@ int TLBMEMPHY_write(struct memphy_struct *mp, int addr, BYTE data)
 {
    pthread_mutex_lock(&tlb_lock);
    if (mp == NULL)
+   {
+      pthread_mutex_unlock(&tlb_lock);
       return -1;
-
+   }
    /* TLB cached is random access by native */
    mp->storage[addr] = data;
    pthread_mutex_unlock(&tlb_lock);
