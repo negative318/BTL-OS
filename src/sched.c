@@ -52,16 +52,6 @@ void set_slot()
 	for (int i = 0; i < MAX_PRIO; i++)
 		slot[i] = MAX_PRIO - i;
 }
-int check_new_process_come(int i)
-{
-	for (int j = 0; j < i; j++)
-	{
-		if (empty(&mlq_ready_queue[j]) || slot[j] <= 0)
-			continue;
-		return j - 1;
-	}
-	return -2;
-}
 struct pcb_t *get_mlq_proc(void)
 {
 	struct pcb_t *proc = NULL;
@@ -72,14 +62,6 @@ struct pcb_t *get_mlq_proc(void)
 	int index = 0;
 	for (int i = 0; i < MAX_PRIO; ++i)
 	{
-		pthread_mutex_lock(&queue_lock);
-		index = check_new_process_come(i);
-		if (index != -2)
-		{
-			i = index;
-			pthread_mutex_unlock(&queue_lock);
-			continue;
-		}
 		if (empty(&mlq_ready_queue[i]))
 		{
 			if (flag == 1 && i == MAX_PRIO - 1)

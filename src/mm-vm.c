@@ -400,7 +400,7 @@ int pgread(
 #ifdef IODUMP
   printf("read region=%d offset=%d value=%d\n", source, offset, data);
 #ifdef PAGETBL_DUMP
-  // print_pgtbl(proc, 0, -1); // print max TBL
+  print_pgtbl(proc, 0, -1); // print max TBL
 #endif
   MEMPHY_dump(proc->mram);
 #endif
@@ -452,7 +452,7 @@ int pgwrite(
     printf("write region=%d offset=%d value=%d\n", destination, offset, data);
   }
 #ifdef PAGETBL_DUMP
-  // print_pgtbl(proc, 0, -1); // print max TBL
+  print_pgtbl(proc, 0, -1); // print max TBL
 #endif
 
   MEMPHY_dump(proc->mram);

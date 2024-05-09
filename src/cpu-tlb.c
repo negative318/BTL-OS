@@ -106,6 +106,7 @@ int tlbread(struct pcb_t *proc, uint32_t source,
            source, offset);
   }
 #ifdef PAGETBL_DUMP
+  print_pgtbl(proc, 0, -1);
   TLBMEMPHY_dump(proc->tlb);
 #endif
   MEMPHY_dump(proc->mram);
@@ -171,6 +172,7 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
            destination, offset, data);
   }
 #ifdef PAGETBL_DUMP
+  print_pgtbl(proc, 0, -1);
   TLBMEMPHY_dump(proc->tlb);
 #endif
   MEMPHY_dump(proc->mram);
