@@ -118,6 +118,8 @@ int tlbread(struct pcb_t *proc, uint32_t source,
   else
   {
     val = __read(proc, 0, source, offset, &data);
+    uint32_t pte = proc->mm->pgd[page];
+    frmnum = PAGING_FPN(pte);
     if (val == 0)
     {
       tlb_cache_write(proc->tlb, proc->pid, page, data);
