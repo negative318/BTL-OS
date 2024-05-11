@@ -1,0 +1,11 @@
+1 10
+alloc 1350 0
+alloc 750 1
+write 102 0 0
+write 102 0 513
+free 0
+free 1
+alloc 300 3
+alloc 300 2
+free 2
+free 3
