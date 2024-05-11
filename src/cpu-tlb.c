@@ -112,7 +112,7 @@ int tlbread(struct pcb_t *proc, uint32_t source,
 #endif
   if (frmnum >= 0)
   {
-    int physical_addr = (frmnum << PAGING_ADDR_FPN_HIBIT) + offset;
+    int physical_addr = (frmnum << PAGING_ADDR_FPN_HIBIT) + offset % 256;
     MEMPHY_read(proc->mram, physical_addr, &data);
   }
   else
@@ -154,7 +154,6 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
     printf("REGION WRITE NULL\n");
     return -1;
   }
-
   int addr = region->rg_start + offset;
   int page = PAGING_PGN(addr);
   tlb_cache_read(proc->tlb, proc->pid, page, &frmnum);
@@ -174,8 +173,7 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
 
   if (frmnum >= 0)
   {
-    int phyaddr = (frmnum << PAGING_ADDR_FPN_LOBIT) + offset;
-
+    int phyaddr = (frmnum << PAGING_ADDR_FPN_LOBIT) + offset % 256;
     MEMPHY_write(proc->mram, phyaddr, data);
   }
   else
