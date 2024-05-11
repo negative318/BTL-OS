@@ -142,7 +142,7 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
              uint32_t destination, uint32_t offset)
 {
   int val = 0;
-  BYTE frmnum = -1;
+  int frmnum = -1;
   /* TODO retrieve TLB CACHED frame num of accessing page(s))*/
   /* by using tlb_cache_read()/tlb_cache_write()
   frmnum is return value of tlb_cache_read/write value*/
@@ -155,8 +155,7 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
 
   int addr = region->rg_start + offset;
   int page = PAGING_PGN(addr);
-  frmnum = PAGING_FPN(page);
-  tlb_cache_write(proc->tlb, proc->pid, page, frmnum);
+  tlb_cache_read(proc->tlb, proc->pid, page, &frmnum);
 
 #ifdef IODUMP
   if (frmnum >= 0)
@@ -180,9 +179,11 @@ int tlbwrite(struct pcb_t *proc, BYTE data,
   else
   {
     val = __write(proc, 0, destination, offset, data);
+    uint32_t pte = proc->mm->pgd[page];
+    frmnum = PAGING_FPN(pte);
     if (val == 0)
     {
-      tlb_cache_write(proc->tlb, proc->pid, page, data);
+      tlb_cache_write(proc->tlb, proc->pid, page, frmnum);
     }
   }
 #ifdef IODUMP

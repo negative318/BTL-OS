@@ -105,7 +105,7 @@ int tlb_cache_write(struct memphy_struct *mp, int pid, int pgnum, int value)
    SET_PID(tlb[index][0], pid);
    SETBIT(tlb[index][0], BIT(30));
    pthread_mutex_unlock(&tlb_lock);
-   return -1;
+   return 0;
 }
 
 /*
@@ -164,8 +164,9 @@ int TLBMEMPHY_dump(struct memphy_struct *mp)
    {
       int valid = GET_VALID(tlb[i][0]);
       int pid = GET_PID(tlb[i][0]);
+      int tag = GET_TAG(tlb[i][0]);
       int frame = tlb[i][1];
-      printf("%02d %d %08d %08d\n", i, valid, pid, frame);
+      printf("%02d %d %08d %08d %08d\n", i, valid, pid, tag, frame);
    }
    printf("==========================END TLB DUMP==========================\n");
    pthread_mutex_unlock(&tlb_lock);
